@@ -1,6 +1,6 @@
 import threading
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from main import WebAutomation
 
 
@@ -9,65 +9,151 @@ class App:
         self.root = root
         self.root.title("Web Automation Engine")
 
+        # Center the window on the screen
+        window_width = 500
+        window_height = 650
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        center_x = int(screen_width / 2 - window_width / 2)
+        center_y = int(screen_height / 2 - window_height / 2)
+        self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
+        self.root.resizable(False, False)
+
         self.web_automation = None
 
-        # Login Frame
-        self.login_frame = tk.Frame(self.root)
-        self.login_frame.pack(padx=10, pady=10)
+        # Theme config
+        style = ttk.Style()
+        style.theme_use("clam")
 
-        tk.Label(self.login_frame, text="Username").grid(row=0, column=0, sticky="w")
-        self.entry_username = tk.Entry(self.login_frame)
-        self.entry_username.grid(row=0, column=1, sticky="ew")
+        # Color palette
+        bg_color = "#0D0D0D"
+        surface_color = "#1A1A1A"
+        fg_color = "#F2F2F2"
+        muted_fg = "#A0A0A0"
+        accent_blue = "#0A84FF"
+        accent_blue_hover = "#0066CC"
+        accent_red = "#FF453A"
+        accent_red_hover = "#D70015"
 
-        tk.Label(self.login_frame, text="Password").grid(row=1, column=0, sticky="w")
-        self.entry_password = tk.Entry(self.login_frame, show="*")
-        self.entry_password.grid(row=1, column=1, sticky="ew")
+        self.root.configure(bg=bg_color)
 
-        # Form submission frame
-        self.form_frame = tk.Frame(self.root)
-        self.form_frame.pack(padx=10, pady=10)
-
-        tk.Label(self.form_frame, text="Full Name").grid(row=0, column=0, sticky="w")
-        self.entry_fullname = tk.Entry(self.form_frame)
-        self.entry_fullname.grid(row=0, column=1, sticky="ew")
-
-        tk.Label(self.form_frame, text="Email").grid(row=1, column=0, sticky="w")
-        self.entry_email = tk.Entry(self.form_frame)
-        self.entry_email.grid(row=1, column=1, sticky="ew")
-
-        tk.Label(self.form_frame, text="Current Address").grid(
-            row=2, column=0, sticky="w"
+        # Global styles
+        style.configure("TFrame", background=bg_color)
+        style.configure(
+            "TLabel", background=bg_color, foreground=muted_fg, font=("Segoe UI", 10)
         )
-        self.entry_current_address = tk.Entry(self.form_frame)
-        self.entry_current_address.grid(row=2, column=1, sticky="ew")
 
-        tk.Label(self.form_frame, text="Permanent Address").grid(
-            row=3, column=0, sticky="w"
+        # Typography hierarchy
+        style.configure(
+            "Title.TLabel", foreground=fg_color, font=("Segoe UI", 22, "bold")
         )
-        self.entry_permanent_address = tk.Entry(self.form_frame)
-        self.entry_permanent_address.grid(row=3, column=1, sticky="ew")
+        style.configure(
+            "Subtitle.TLabel", foreground=accent_blue, font=("Segoe UI", 10)
+        )
+
+        # Input fields
+        style.configure(
+            "TEntry",
+            fieldbackground=surface_color,
+            foreground=fg_color,
+            borderwidth=0,
+            padding=10,
+        )
 
         # Buttons
-        self.button_frame = tk.Frame(self.root)
-        self.button_frame.pack(padx=10, pady=10)
+        style.configure(
+            "Primary.TButton",
+            background=accent_blue,
+            foreground="white",
+            font=("Segoe UI", 11, "bold"),
+            padding=10,
+            borderwidth=0,
+        )
+        style.map(
+            "Primary.TButton",
+            background=[("active", accent_blue_hover), ("disabled", "#333333")],
+        )
 
-        self.submit_button = tk.Button(
+        style.configure(
+            "Danger.TButton",
+            background=accent_red,
+            foreground="white",
+            font=("Segoe UI", 11, "bold"),
+            padding=10,
+            borderwidth=0,
+        )
+        style.map("Danger.TButton", background=[("active", accent_red_hover)])
+
+        # UI layout
+        self.main_container = ttk.Frame(self.root)
+        self.main_container.pack(padx=40, pady=35, fill="both", expand=True)
+
+        # Header Section
+        ttk.Label(
+            self.main_container, text="Automation Setup", style="Title.TLabel"
+        ).pack(anchor="w")
+        ttk.Label(
+            self.main_container,
+            text="Configure your credentials and data to start.",
+            style="Subtitle.TLabel",
+        ).pack(anchor="w", pady=(0, 30))
+
+        # Form Container
+        self.form_frame = ttk.Frame(self.main_container)
+        self.form_frame.pack(fill="x")
+        self.form_frame.columnconfigure(1, weight=1)
+
+        # Helper to create perfectly aligned rows
+        def add_field(row, label_text, show_char=None, pady=10):
+            ttk.Label(self.form_frame, text=label_text).grid(
+                row=row, column=0, sticky="w", pady=pady, padx=(0, 15)
+            )
+            entry = ttk.Entry(self.form_frame, font=("Segoe UI", 11), show=show_char)
+            entry.grid(row=row, column=1, sticky="ew", pady=pady)
+            return entry
+
+        # Credentials Group
+        self.entry_username = add_field(0, "Username", pady=(0, 8))
+        self.entry_password = add_field(1, "Password", show_char="*", pady=(0, 20))
+
+        # Subtle horizontal divider
+        ttk.Separator(self.form_frame, orient="horizontal").grid(
+            row=2, column=0, columnspan=2, sticky="ew", pady=(0, 20)
+        )
+
+        # Personal Info Group
+        self.entry_fullname = add_field(3, "Full Name", pady=(0, 8))
+        self.entry_email = add_field(4, "Email", pady=(0, 8))
+        self.entry_current_address = add_field(5, "Current Address", pady=(0, 8))
+        self.entry_permanent_address = add_field(6, "Permanent Address", pady=(0, 8))
+
+        # Buttons Container
+        self.button_frame = ttk.Frame(self.main_container)
+        self.button_frame.pack(fill="x", pady=(35, 0))
+        # Allow buttons to take equal space horizontally
+        self.button_frame.columnconfigure(0, weight=1)
+        self.button_frame.columnconfigure(1, weight=1)
+
+        self.submit_button = ttk.Button(
             self.button_frame,
-            text="Start Automation",
+            text="Start Engine",
+            style="Primary.TButton",
             command=self.start_automation_thread,
         )
+        self.submit_button.grid(row=0, column=0, padx=(0, 8), sticky="ew")
 
-        self.submit_button.grid(row=0, column=0, padx=5)
-
-        self.close_btn = tk.Button(
-            self.button_frame, text="Close Browser", command=self.close_browser
+        self.close_btn = ttk.Button(
+            self.button_frame,
+            text="Close Browser",
+            style="Danger.TButton",
+            command=self.close_browser,
         )
-        self.close_btn.grid(row=0, column=1, padx=5)
+        self.close_btn.grid(row=0, column=1, padx=(8, 0), sticky="ew")
 
+    # Functions
     def start_automation_thread(self):
-        # Prevent multiple presses
+        # Disable button to prevent multi-clicks
         self.submit_button.config(state=tk.DISABLED)
-
         thread = threading.Thread(target=self.execute_automation)
         thread.start()
 
@@ -86,6 +172,7 @@ class App:
                 fullname, email, current_address, permanent_address
             )
             self.web_automation.download()
+
             self.root.after(
                 0,
                 lambda: messagebox.showinfo(

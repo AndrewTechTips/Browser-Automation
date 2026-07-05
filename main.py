@@ -122,15 +122,3 @@ class WebAutomation:
     def close(self):
         if hasattr(self, "driver"):
             self.driver.quit()
-
-
-if __name__ == "__main__":
-    try:
-        bot = WebAutomation()
-        bot.login("python_student", "PYTHON_student123@")
-        bot.fill_form("John Smith", "john@gmail.com", "Street 1", "Street 2")
-        bot.download()
-    except Exception as error:
-        print(f"Error occurred: {error}")
-    finally:
-        bot.close()
