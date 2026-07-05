@@ -1,3 +1,6 @@
+import time
+import os
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -11,6 +14,11 @@ password = "PYTHON_student123@"
 # Define driver, options and service
 chrome_options = Options()
 chrome_options.add_argument("--disable-search-engine-choice-screen")
+
+download_path = os.getcwd()
+prefs = {"download.default_directory": download_path}
+chrome_options.add_experimental_option("prefs", prefs)
+
 service = Service("chromedriver-mac-arm64/chromedriver")
 driver = webdriver.Chrome(options=chrome_options, service=service)
 
@@ -69,6 +77,20 @@ current_address_field.send_keys("John Street 100, New York, USA")
 permanent_address_field.send_keys("John Street 100, New York, USA")
 
 driver.execute_script("arguments[0].click();", submit_button)
+
+# Locate the Upload and Download section and the Download button
+upload_download = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.ID, "item-7"))
+)
+driver.execute_script(
+    "arguments[0].scrollIntoView({block: 'center'});", upload_download
+)
+time.sleep(1)
+upload_download.click()
+
+download_button = driver.find_element(By.ID, "downloadButton")
+driver.execute_script("arguments[0].click();", download_button)
+
 
 input("Press Enter to close the browser")
 driver.quit()
