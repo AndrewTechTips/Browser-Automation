@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from tkinter import messagebox
 from main import WebAutomation
@@ -6,7 +7,9 @@ from main import WebAutomation
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("Web Automation GUI")
+        self.root.title("Web Automation Engine")
+
+        self.web_automation = None
 
         # Login Frame
         self.login_frame = tk.Frame(self.root)
@@ -45,17 +48,30 @@ class App:
         self.entry_permanent_address.grid(row=3, column=1, sticky="ew")
 
         # Buttons
-        self.button_frame = tk.Frame()
+        self.button_frame = tk.Frame(self.root)
         self.button_frame.pack(padx=10, pady=10)
 
-        tk.Button(self.button_frame, text="Submit", command=self.submit_data).grid(
-            row=0, column=0, padx=5
+        self.submit_button = tk.Button(
+            self.button_frame,
+            text="Start Automation",
+            command=self.start_automation_thread,
         )
-        tk.Button(
-            self.button_frame, text="Close Browser", command=self.close_browser
-        ).grid(row=0, column=1, padx=5)
 
-    def submit_data(self):
+        self.submit_button.grid(row=0, column=0, padx=5)
+
+        self.close_btn = tk.Button(
+            self.button_frame, text="Close Browser", command=self.close_browser
+        )
+        self.close_btn.grid(row=0, column=1, padx=5)
+
+    def start_automation_thread(self):
+        # Prevent multiple presses
+        self.submit_button.config(state=tk.DISABLED)
+
+        thread = threading.Thread(target=self.execute_automation)
+        thread.start()
+
+    def execute_automation(self):
         username = self.entry_username.get()
         password = self.entry_password.get()
         fullname = self.entry_fullname.get()
@@ -63,17 +79,34 @@ class App:
         current_address = self.entry_current_address.get()
         permanent_address = self.entry_permanent_address.get()
 
-        self.web_automation = WebAutomation()
-        self.web_automation.login(username, password)
-        self.web_automation.fill_form(
-            fullname, email, current_address, permanent_address
-        )
+        try:
+            self.web_automation = WebAutomation()
+            self.web_automation.login(username, password)
+            self.web_automation.fill_form(
+                fullname, email, current_address, permanent_address
+            )
+            self.web_automation.download()
+            self.root.after(
+                0,
+                lambda: messagebox.showinfo(
+                    "Success", "Automation completed successfully!"
+                ),
+            )
+        except Exception as e:
+            self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
+        finally:
+            self.root.after(0, lambda: self.submit_button.config(state=tk.NORMAL))
 
     def close_browser(self):
-        self.web_automation.close()
-        messagebox.showinfo("Browser Closed", "Submitted Successfully")
+        if self.web_automation:
+            self.web_automation.close()
+            self.web_automation = None
+            messagebox.showinfo("Browser", "Browser closed successfully.")
+        else:
+            messagebox.showwarning("Warning", "No active browser session to close.")
 
 
-root = tk.Tk()
-app = App(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
